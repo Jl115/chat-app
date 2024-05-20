@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: lb-chat
+    ports:
+      - "9091:5432"
+
+  ki:
+    image: jl115/tinyllm:latest
+    container_name: chat-ki
+    ports:
+      - "9095:11434"
