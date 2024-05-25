@@ -1,27 +1,27 @@
 const express = require("express");
 const cors = require("cors");
 const db = require("../models/index.js");
-const { auth } = require("express-openid-connect");
+// const { auth } = require("express-openid-connect");
 
 // Set path to .env file
 require("dotenv").config();
 
-const routes = require("./routes/routes.js");
+const routes = require("./Routes/routes");
 
-const config = {
+/* const config = {
   authRequired: false,
   auth0Logout: true,
   secret: "a long, randomly-generated string stored in env",
   baseURL: "http://localhost:9090/auth/",
   clientID: process.env.CLIENT_ID,
   issuerBaseURL: process.env.CLIENT_BASE_URL,
-};
+}; */
 
 // auth router attaches /login, /logout, and /callback routes to the baseURL
 
 // Initialize app
 const app = express();
-app.use(auth(config));
+/* app.use(auth(config)); */
 var corsOptions = {
   origin: "http://localhost:9091",
 };
