@@ -1,18 +1,24 @@
-const router = require("express").Router();
-
 require("dotenv").config();
+/**
+ * The `chatRoutes` function defines routes for handling chat-related requests in a Node.js application.
+ * @param router - The `router` parameter in the `chatRoutes` function is an instance of Express Router. It is used to
+ * define routes for handling different HTTP methods like GET, POST, DELETE, etc. The routes defined using the `router`
+ * object will be attached to the main Express application when the `chat
+ */
 
-// req.isAuthenticated is provided from the auth router
-router.get("/", (req, res) => {
-  res.send("chat");
-});
+const chatRoutes = (router) => {
+  // req.isAuthenticated is provided from the auth router
+  router.get("/", (req, res) => {
+    res.send("chat");
+  });
 
-router.post("/edit/:id", (req, res) => {
-  res.send("Profile"); // redirect to /profile if authenticated
-});
+  router.post("/edit/:id", (req, res) => {
+    res.send("Profile"); // redirect to /profile if authenticated
+  });
 
-router.delete("/delete/:id", (req, res) => {
-  res.send("delete");
-});
+  router.delete("/delete/:id", (req, res) => {
+    res.send("delete");
+  });
+};
 
-module.exports = router;
+module.exports = chatRoutes;
