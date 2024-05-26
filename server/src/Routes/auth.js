@@ -17,16 +17,17 @@ const authRoutes = (router) => {
     res.send("login");
   });
 
-  router.post("/register", (req, res) => {
+  router.post("/register", async (req, res) => {
     const validationObject = registerResolver(req.body);
+
     if (validationObject.status === "400") {
-      res.send(validationObject);
+      return res.send(validationObject);
     }
-    const creation = createUserController(validationObject);
-    if (creation.status === "201") {
-      res.send(creation);
+    const creation = await createUserController(validationObject);
+    if (creation.status === "400") {
+      return res.send(creation);
     }
-    res.send(creation);
+    return res.send(creation);
   });
 
   router.get("/profile", (req, res) => {

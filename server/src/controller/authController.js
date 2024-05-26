@@ -17,6 +17,13 @@ const secretKey = process.env.JWT_SECRET || "secret key"; // Make sure to set th
 const createUserController = async (validationObj) => {
   const { username, email, password } = validationObj.input;
   try {
+    const checkUser = await User.findOne({ where: { email } });
+    if (checkUser) {
+      return {
+        status: "400",
+        message: `User Already exists`,
+      };
+    }
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     // Create the user
@@ -34,10 +41,13 @@ const createUserController = async (validationObj) => {
       }
     );
     // Send back the user and the token
-    return { status: "201", token };
+    return { status: "201", message: "created user", token };
   } catch (error) {
     console.error("\x1b[31m%s\x1b[0m", "Error creating user:", error);
-    return { status: "400", message: "Error creating user" };
+    return {
+      status: "400",
+      message: `Invalid request: ${error.details[0].message}`,
+    };
   }
 };
 

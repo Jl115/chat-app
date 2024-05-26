@@ -18,20 +18,16 @@ const registrationSchema = Joi.object({
  * If there is an error in validation, it will return `{ status: "400", message: "Invalid request: ${error.details[
  */
 const registerResolver = (input) => {
-  console.log("\x1b[33m%s\x1b[0m", "input --------------------", input);
   // Validate the input object against the schema
   const { error } = registrationSchema.validate(input);
-  console.log("\x1b[33m%s\x1b[0m", "1 --------------------", 1);
   if (error) {
-    console.log("\x1b[33m%s\x1b[0m", "2 --------------------", 1);
     return {
       status: "400",
       message: `Invalid request: ${error.details[0].message}`,
     };
   }
 
-  console.log("\x1b[33m%s\x1b[0m", "3 --------------------", 1);
-  return { status: "201", message: "Input is valid", input };
+  return { status: "201", message: "Input is valid", input: input };
 };
 
 module.exports = { registerResolver };
