@@ -18,6 +18,7 @@ const aiRoutes = (router) => {
   router.delete("/delete", (req, res) => {
     res.send("delete ai chat");
   });
+  return router;
 };
 
 module.exports = aiRoutes;

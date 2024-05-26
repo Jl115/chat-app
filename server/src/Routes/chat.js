@@ -19,6 +19,7 @@ const chatRoutes = (router) => {
   router.delete("/delete/:id", (req, res) => {
     res.send("delete");
   });
+  return router;
 };
 
 module.exports = chatRoutes;

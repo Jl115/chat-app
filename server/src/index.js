@@ -2,30 +2,31 @@ const express = require("express");
 const cors = require("cors");
 const WebSocket = require("ws");
 const db = require("../models/index.js");
-const initializeWebsocketServer = require("./sockets/socket");
+const initializeWebsocketServer = require("./sockets/socket.js");
 
 // Set path to .env file
 require("dotenv").config();
 
-const routes = require("./Routes/routes");
+const routes = require("./routes/routes.js");
 
 // Initialize app
 const app = express();
-/* app.use(auth(config)); */
-var corsOptions = {
-  // origin: "http://localhost:9091",
+const corsOptions = {
   origin: "*",
 };
 
-// mideleware
+// Middleware
 app.use(cors(corsOptions));
+app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true }));
 
-// websocket server
+// WebSocket server
 const websocketServer = new WebSocket.Server({ port: 9093 });
 initializeWebsocketServer(websocketServer);
-//Routes
-app.use("/", routes);
+
+// Initialize and use routes
+app.use("/", routes(express.Router()));
+
 console.log(
   "\x1b[33m%s\x1b[0m",
   " ,process.env.DEV_DB_USERNAME--------------------",
