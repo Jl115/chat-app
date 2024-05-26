@@ -1,36 +1,29 @@
 const express = require("express");
 const cors = require("cors");
+const WebSocket = require("ws");
 const db = require("../models/index.js");
-// const { auth } = require("express-openid-connect");
+const initializeWebsocketServer = require("./sockets/socket");
 
 // Set path to .env file
 require("dotenv").config();
 
 const routes = require("./Routes/routes");
 
-/* const config = {
-  authRequired: false,
-  auth0Logout: true,
-  secret: "a long, randomly-generated string stored in env",
-  baseURL: "http://localhost:9090/auth/",
-  clientID: process.env.CLIENT_ID,
-  issuerBaseURL: process.env.CLIENT_BASE_URL,
-}; */
-
-// auth router attaches /login, /logout, and /callback routes to the baseURL
-
 // Initialize app
 const app = express();
 /* app.use(auth(config)); */
 var corsOptions = {
-  origin: "http://localhost:9091",
+  // origin: "http://localhost:9091",
+  origin: "*",
 };
 
 // mideleware
 app.use(cors(corsOptions));
-app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// websocket server
+const websocketServer = new WebSocket.Server({ port: 9093 });
+initializeWebsocketServer(websocketServer);
 //Routes
 app.use("/", routes);
 console.log(
