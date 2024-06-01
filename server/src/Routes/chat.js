@@ -8,7 +8,7 @@ require("dotenv").config();
 
 const chatRoutes = (router) => {
   // req.isAuthenticated is provided from the auth router
-  router.get("/", (req, res) => {
+  router.get("/chat", (req, res) => {
     res.send("chat");
   });
 

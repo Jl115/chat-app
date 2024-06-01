@@ -1,5 +1,5 @@
 // Resolver
-const { registerResolver } = require("../validator/authValidator");
+const { registerValidator } = require("../validators/authValidator");
 // Controller
 const { createUserController } = require("../controller/authController");
 require("dotenv").config();
@@ -14,7 +14,7 @@ const authRoutes = (router) => {
   });
 
   router.post("/register", async (req, res) => {
-    const validationObject = registerResolver(req.body);
+    const validationObject = registerValidator(req.body);
 
     if (validationObject.status === "400") {
       return res.send(validationObject);

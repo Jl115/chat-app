@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const WebSocket = require("ws");
+const path = require("path");
 const db = require("../models/index.js");
 const initializeWebsocketServer = require("./sockets/socket.js");
 
@@ -20,12 +21,20 @@ app.use(cors(corsOptions));
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files from the 'client' directory
+app.use(express.static(path.join(__dirname, "../dist")));
+
+// Route for serving the index.html
+
 // WebSocket server
 const websocketServer = new WebSocket.Server({ port: 9093 });
 initializeWebsocketServer(websocketServer);
-
-// Initialize and use routes
-app.use("/", routes(express.Router()));
+// send the static website
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../dist/index.html"));
+});
+// Initialize and use API routes
+app.use("/api", routes(express.Router()));
 
 console.log(
   "\x1b[33m%s\x1b[0m",

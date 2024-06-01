@@ -1,3 +1,5 @@
+const { aiMessageValidator } = require("../validators/aiValidator");
+const { createResponseController } = require("../controller/aiController");
 require("dotenv").config();
 
 /**
@@ -7,8 +9,21 @@ require("dotenv").config();
  * is used to define three routes: a GET route for the root path
  */
 const aiRoutes = (router) => {
-  router.get("/", (req, res) => {
+  router.get("/ai", (req, res) => {
     res.send("chat ai");
+  });
+
+  router.post("/ask", async (req, res) => {
+    console.log("\x1b[33m%s\x1b[0m", "req.body --------------------", req.body);
+    const validationObject = aiMessageValidator(req.body);
+    if (validationObject.status === "400") {
+      return res.send(validationObject);
+    }
+    const response = await createResponseController(validationObject.input);
+    if (response.status === "400") {
+      return res.send(response);
+    }
+    return res.send(response);
   });
 
   router.post("/create", (req, res) => {

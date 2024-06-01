@@ -8,14 +8,14 @@ const secretKey = process.env.JWT_SECRET || "secret key"; // Make sure to set th
 /**
  * The function `createUserController` creates a new user, hashes the password, generates a JWT token, and returns the user
  * and token or an error message.
- * @param validationObj - The `validationObj` parameter in the `createUserController` function likely contains an object
+ * @param object - The `object` parameter in the `createUserController` function likely contains an object
  * with an `input` property that holds the user input data such as `username`, `email`, and `password`. The structure of
- * `validationObj` might look something like this:
+ * `object` might look something like this:
  * @returns The `createUserController` function returns an object with either a status of "201" and a token if the user
  * creation is successful, or a status of "400" and an error message if there is an error creating the user.
  */
-const createUserController = async (validationObj) => {
-  const { username, email, password } = validationObj.input;
+const createUserController = async (object) => {
+  const { username, email, password } = object.input;
   try {
     const checkUser = await User.findOne({ where: { email } });
     if (checkUser) {
