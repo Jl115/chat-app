@@ -1,7 +1,7 @@
 const express = require("express");
-const authRoutes = require("./auth.js"); // Ensure the correct path
-const chatRoutes = require("./chat.js"); // Ensure the correct path
-const aiRoutes = require("./ai.js"); // Ensure the correct path
+const authRoutes = require("./auth.js");
+const chatRoutes = require("./chat.js");
+const aiRoutes = require("./ai.js");
 
 /**
  * The function `routes` defines different routes for authentication, chat, and AI functionalities.
@@ -13,7 +13,7 @@ const routes = (router) => {
   router.use("/chat", chatRoutes(router));
   router.use("/ai", aiRoutes(router));
 
-  return router; // Return the router instance
+  return router;
 };
 
 module.exports = routes;

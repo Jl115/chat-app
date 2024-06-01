@@ -1,34 +1,41 @@
-# client
+# client_lb_chat_app
 
-An Electron application with Vue
+This template should help get you started developing with Vue 3 in Vite.
 
 ## Recommended IDE Setup
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
+[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+
+## Customize configuration
+
+See [Vite Configuration Reference](https://vitejs.dev/config/).
 
 ## Project Setup
 
-### Install
-
-```bash
-$ npm install
+```sh
+npm install
 ```
 
-### Development
+### Compile and Hot-Reload for Development
 
-```bash
-$ npm run dev
+```sh
+npm run dev
 ```
 
-### Build
+### Compile and Minify for Production
 
-```bash
-# For windows
-$ npm run build:win
+```sh
+npm run build
+```
 
-# For macOS
-$ npm run build:mac
+### Run Unit Tests with [Vitest](https://vitest.dev/)
 
-# For Linux
-$ npm run build:linux
+```sh
+npm run test:unit
+```
+
+### Lint with [ESLint](https://eslint.org/)
+
+```sh
+npm run lint
 ```

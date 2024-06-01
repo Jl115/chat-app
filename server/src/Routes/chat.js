@@ -13,7 +13,7 @@ const chatRoutes = (router) => {
   });
 
   router.post("/edit/:id", (req, res) => {
-    res.send("Profile"); // redirect to /profile if authenticated
+    res.send("Profile");
   });
 
   router.delete("/delete/:id", (req, res) => {

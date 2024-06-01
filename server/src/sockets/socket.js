@@ -32,7 +32,6 @@ const onMessage = (ws, messageBuffer) => {
 
   try {
     const message = JSON.stringify(messageString);
-    console.log("\x1b[33m%s\x1b[0m", "message --------------------", message);
 
     clients.push({ ws, message: message });
     // broadcastUsers();
@@ -73,18 +72,8 @@ const broadcastUsers = () => {
  * @param {string} messageString - The message string.
  */
 const broadcastMessage = (sender, messageString) => {
-  console.log(
-    "\x1b[33m%s\x1b[0m",
-    "sender --------------------",
-    sender,
-    messageString
-  );
   clients.forEach((client) => {
-    console.log("\x1b[33m%s\x1b[0m", "client --------------------", client);
-    client.ws.send(messageString);
-    /* if (client.ws !== sender) {
-      console.log("\x1b[33m%s\x1b[0m", "send --------------------");
-    } */
+    if (client.ws !== sender) client.ws.send(messageString);
   });
 };
 

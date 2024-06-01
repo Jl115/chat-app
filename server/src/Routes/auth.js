@@ -1,5 +1,5 @@
 // Resolver
-const { registerResolver } = require("../resolver/authResolver");
+const { registerResolver } = require("../validator/authValidator");
 // Controller
 const { createUserController } = require("../controller/authController");
 require("dotenv").config();
@@ -9,10 +9,6 @@ require("dotenv").config();
  * @param {Object} router - The Express router instance.
  */
 const authRoutes = (router) => {
-  router.get("/", (req, res) => {
-    res.redirect("/auth/login");
-  });
-
   router.get("/login", (req, res) => {
     res.send("login");
   });
@@ -38,7 +34,7 @@ const authRoutes = (router) => {
     res.send("logout");
   });
 
-  return router; // Return the router instance with routes defined
+  return router;
 };
 
 module.exports = authRoutes;
