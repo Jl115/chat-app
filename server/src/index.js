@@ -1,9 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-const WebSocket = require("ws");
 const path = require("path");
 const db = require("../models/index.js");
-const initializeWebsocketServer = require("./sockets/socket.js");
+const initializeSocketServer = require("./sockets/socket");
 
 // Set path to .env file
 require("dotenv").config();
@@ -25,14 +24,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "../dist")));
 
 // Route for serving the index.html
-
-// WebSocket server
-const websocketServer = new WebSocket.Server({ port: 9093 });
-initializeWebsocketServer(websocketServer);
-// send the static website
-app.get("/", (req, res) => {
+app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../dist/index.html"));
 });
+
 // Initialize and use API routes
 app.use("/api", routes(express.Router()));
 
@@ -50,12 +45,17 @@ db.sequelize
   )
   .catch((error) => console.error("Unable to connect to the database:", error));
 
+// Create HTTP server
+const server = require("http").createServer(app);
+
+// Initialize Socket.IO server on the same port
+initializeSocketServer(server);
+
 // Start server
-app.listen(process.env.SERVER_PORT, () => {
+const PORT = process.env.SERVER_PORT || 9090;
+server.listen(PORT, () => {
   try {
-    console.log(
-      `App listening at https://localhost:${process.env.SERVER_PORT}`
-    );
+    console.log(`App listening at https://localhost:${PORT}`);
   } catch (error) {
     console.error("Error starting server:", error);
   }

@@ -1,92 +1,16 @@
-const WebSocket = require("ws");
-const message = require("../../models/message");
+const { Server } = require("socket.io");
+const { onConnection } = require("./controller/socketController");
 
-const clients = [];
-
-/**
- * Initializes the websocket server.
- * @param {Object} server - The http server object.
- */
-const initializeWebsocketServer = (websocketServer) => {
-  websocketServer.on("connection", onConnection);
-};
-
-/**
- * Handles a new websocket connection.
- * @param {Object} ws - The websocket object.
- */
-const onConnection = (ws) => {
-  console.log("New websocket connection");
-  ws.on("message", (message) => onMessage(ws, message));
-  ws.on("close", () => onDisconnect(ws));
-};
-
-/**
- * Handles a new message from a websocket connection.
- * @param {Object} ws - The websocket object.
- * @param {Buffer} messageBuffer - The message buffer.
- */
-const onMessage = (ws, messageBuffer) => {
-  const messageString = messageBuffer.toString();
-  console.log("Received message: " + messageString);
-
-  try {
-    const message = JSON.stringify(messageString);
-
-    clients.push({ ws, message: message });
-    // broadcastUsers();
-    broadcastMessage(ws, messageString);
-
-    // switch (message.type) {
-    //   case "user":
-    //     break;
-
-    //   case "message":
-    //     break;
-
-    //   default:
-    //     console.log("Unknown message type: " + message.type);
-    // }
-  } catch (error) {
-    console.error("Failed to parse message:", error);
-  }
-};
-
-/**
- * Broadcasts the list of users to all clients.
- */
-const broadcastUsers = () => {
-  const usersMessage = {
-    type: "users",
-    users: clients.map((client) => client.user),
-  };
-  const usersMessageString = JSON.stringify(usersMessage);
-  clients.forEach((client) => {
-    client.ws.send(usersMessageString);
+const initializeSocketServer = (server) => {
+  const io = new Server(server, {
+    cors: {
+      origin: "*",
+    },
   });
+
+  io.on("connection", (socket) => onConnection(socket));
+
+  return io;
 };
 
-/**
- * Broadcasts a message to all clients except the sender.
- * @param {Object} sender - The websocket object of the sender.
- * @param {string} messageString - The message string.
- */
-const broadcastMessage = (sender, messageString) => {
-  clients.forEach((client) => {
-    if (client.ws !== sender) client.ws.send(messageString);
-  });
-};
-
-/**
- * Handles a websocket disconnect.
- * @param {Object} ws - The websocket object.
- */
-const onDisconnect = (ws) => {
-  const index = clients.findIndex((client) => client.ws === ws);
-  if (index !== -1) {
-    clients.splice(index, 1);
-    broadcastUsers();
-  }
-};
-
-module.exports = initializeWebsocketServer;
+module.exports = initializeSocketServer;
