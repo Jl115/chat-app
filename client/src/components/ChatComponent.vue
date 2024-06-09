@@ -118,7 +118,12 @@ export default {
         return
       }
       if (newMessage.value.trim()) {
-        const message = { id: Date.now(), body: newMessage.value, sender: 'me' }
+        const message = {
+          id: Date.now(),
+          body: newMessage.value,
+          sender: 'me',
+          token: authStore.token
+        }
         socket.value.emit('message', message)
         newMessage.value = ''
       }

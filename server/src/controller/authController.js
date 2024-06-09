@@ -35,6 +35,8 @@ const createUserController = async (object) => {
       secretKey,
       { expiresIn: "20d" }
     );
+    user.token = token;
+    await user.save();
     return { status: "201", message: "User created", token };
   } catch (error) {
     console.error("Error creating user:", error);

@@ -7,11 +7,11 @@
     @hide="emitHide"
   >
     <template #header>
-      <span v-if="isRegister" class="p-text-secondary block mb-5">Register</span>
+      <span v-if="register" class="p-text-secondary block mb-5">Register</span>
       <span v-else class="p-text-secondary block mb-5">Login</span>
     </template>
     <!--* REGISTER  -->
-    <template v-if="isRegister">
+    <template v-if="register">
       <div class="field mb-3">
         <label for="username" class="font-semibold w-6rem">Username</label>
         <InputText id="username" class="w-full" autocomplete="off" v-model="username" />
@@ -44,6 +44,14 @@
           :inputStyle="{ padding: '1rem' }"
         ></Password>
       </div>
+      <div class="flex align-items-center justify-content-between mb-5 gap-5">
+        <a
+          class="font-medium no-underline ml-2 text-right cursor-pointer"
+          style="color: var(--primary-color)"
+          @click="() => (register = false)"
+          >Sign in</a
+        >
+      </div>
       <div class="flex justify-content-center">
         <MainButton
           label="Register"
@@ -71,14 +79,11 @@
         ></Password>
       </div>
       <div class="flex align-items-center justify-content-between mb-5 gap-5">
-        <div class="flex align-items-center">
-          <Checkbox v-model="checked" id="rememberme1" binary class="mr-2"></Checkbox>
-          <label for="rememberme1">Remember me</label>
-        </div>
         <a
           class="font-medium no-underline ml-2 text-right cursor-pointer"
           style="color: var(--primary-color)"
-          >Forgot password?</a
+          @click="() => (register = true)"
+          >Register</a
         >
       </div>
       <div class="flex justify-content-center">
@@ -124,10 +129,10 @@ export default defineComponent({
     const showToggle = ref(props.showMainDialog)
     const authStore = useAuthStore()
     const toast = useToast()
-
-    const title = computed(() => (props.isRegister ? 'Register' : 'Welcome, Isabel!'))
+    const register = ref(false)
+    const title = computed(() => (register.value ? 'Register' : 'Welcome, Isabel!'))
     const subtitle = computed(() =>
-      props.isRegister ? 'Create a new account' : 'Sign in to continue'
+      register.value ? 'Create a new account' : 'Sign in to continue'
     )
 
     const emitHide = () => {
@@ -190,6 +195,7 @@ export default defineComponent({
       title,
       subtitle,
       showToggle,
+      register,
       emitHide,
       handleLogin,
       handleRegister
