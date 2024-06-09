@@ -1,7 +1,15 @@
 // Resolver
-const { registerValidator } = require("../validators/authValidator");
+const {
+  registerValidator,
+  loginValidator,
+  updateValidator,
+} = require("../validators/authValidator");
 // Controller
-const { createUserController } = require("../controller/authController");
+const {
+  createUserController,
+  checkUserController,
+  updateUserController,
+} = require("../controller/authController");
 require("dotenv").config();
 
 /**
@@ -9,10 +17,21 @@ require("dotenv").config();
  * @param {Object} router - The Express router instance.
  */
 const authRoutes = (router) => {
-  router.get("/login", (req, res) => {
-    res.send("login");
+  // Login route
+  router.post("/login", async (req, res) => {
+    const validationObject = loginValidator(req.body);
+    console.log("\x1b[33m%s\x1b[0m", "req.body --------------------", req.body);
+    if (validationObject.status === "400") {
+      return res.send(validationObject);
+    }
+    const checkUser = await checkUserController(validationObject);
+    if (checkUser.status === "400") {
+      return res.send(checkUser);
+    }
+    return res.send(checkUser);
   });
 
+  // Register route
   router.post("/register", async (req, res) => {
     const validationObject = registerValidator(req.body);
 
@@ -26,8 +45,17 @@ const authRoutes = (router) => {
     return res.send(creation);
   });
 
-  router.get("/profile", (req, res) => {
-    res.send("Profile");
+  router.post("/update", async (req, res) => {
+    const token = req.headers.authorizationtoken;
+    const validationObject = updateValidator(req.body);
+    if (validationObject.status === "400") {
+      return res.send(validationObject);
+    }
+    const update = await updateUserController(validationObject, token);
+    if (update.status === "400") {
+      return res.send(update);
+    }
+    return res.send(update);
   });
 
   router.get("/logout", (req, res) => {

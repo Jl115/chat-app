@@ -1,12 +1,15 @@
 @import './base.css';
-
+@import '../output.css';
 #app {
-  max-width: 1280px;
+  width: 100vw;
+  height: 100vh;
+
   margin: 0 auto;
   padding: 2rem;
   font-weight: normal;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  gap: 2rem;
 }
 
 a,

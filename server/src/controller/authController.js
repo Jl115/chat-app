@@ -1,54 +1,118 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { User } = require("../../models"); // Ensure correct import
+const { User } = require("../../models");
 const saltRounds = 10;
 require("dotenv").config();
-const secretKey = process.env.JWT_SECRET || "secret key"; // Make sure to set this in your .env file
+const secretKey = process.env.JWT_SECRET || "secret key";
 
-/**
- * The function `createUserController` creates a new user, hashes the password, generates a JWT token, and returns the user
- * and token or an error message.
- * @param object - The `object` parameter in the `createUserController` function likely contains an object
- * with an `input` property that holds the user input data such as `username`, `email`, and `password`. The structure of
- * `object` might look something like this:
- * @returns The `createUserController` function returns an object with either a status of "201" and a token if the user
- * creation is successful, or a status of "400" and an error message if there is an error creating the user.
- */
+const checkUserIfExists = async (email) => {
+  try {
+    const user = await User.findOne({ where: { email } });
+    return user;
+  } catch (error) {
+    return null;
+  }
+};
+
 const createUserController = async (object) => {
   const { username, email, password } = object.input;
   try {
-    const checkUser = await User.findOne({ where: { email } });
+    const checkUser = await checkUserIfExists(email);
     if (checkUser) {
       return {
         status: "400",
-        message: `User Already exists`,
+        message: "User already exists",
       };
     }
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    // Create the user
     const user = await User.create({
-      username: username,
-      email: email,
+      username,
+      email,
       password: hashedPassword,
     });
-    // Create a JWT token
     const token = jwt.sign(
       { id: user.id, username: user.username, email: user.email },
       secretKey,
-      {
-        expiresIn: "20d",
-      }
+      { expiresIn: "20d" }
     );
-    // Send back the user and the token
-    return { status: "201", message: "created user", token };
+    return { status: "201", message: "User created", token };
   } catch (error) {
-    console.error("\x1b[31m%s\x1b[0m", "Error creating user:", error);
+    console.error("Error creating user:", error);
     return {
       status: "400",
-      message: `Invalid request: ${error.details[0].message}`,
+      message: `Invalid request: ${error.message}`,
     };
   }
 };
 
-module.exports = { createUserController };
+const checkUserController = async (object) => {
+  const { email, password } = object.input;
+  try {
+    const user = await checkUserIfExists(email);
+    if (!user) {
+      return {
+        status: "400",
+        message: "Invalid email or password",
+      };
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return {
+        status: "400",
+        message: "Invalid email or password",
+      };
+    }
+    const token = jwt.sign(
+      { id: user.id, username: user.username, email: user.email },
+      secretKey,
+      { expiresIn: "20d" }
+    );
+    return { status: "200", message: "Logged in successfully", token };
+  } catch (error) {
+    console.error("Error checking user:", error);
+    return {
+      status: "400",
+      message: `Invalid request: ${error.message}`,
+    };
+  }
+};
+
+const updateUserController = async (object, token) => {
+  const { username, email, password } = object.input;
+  try {
+    const decoded = jwt.verify(token, secretKey);
+    if (decoded) {
+      const user = await User.findOne({
+        where: { email: decoded.email },
+      });
+      if (!user) {
+        return {
+          status: "400",
+          message: "User not found",
+        };
+      }
+      if (username) user.username = username;
+      if (email) user.email = email;
+      if (password) {
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        user.password = hashedPassword;
+      }
+      await user.save();
+      return {
+        status: "200",
+        message: "User updated successfully",
+      };
+    }
+  } catch (error) {
+    return {
+      status: "400",
+      message: "Invalid token",
+    };
+  }
+};
+
+module.exports = {
+  createUserController,
+  checkUserController,
+  updateUserController,
+};

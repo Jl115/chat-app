@@ -11,24 +11,41 @@
         </div>
       </div>
     </div>
-    <div class="input-container">
+    <div class="input-container" v-if="isLoggedIn">
       <Message :closable="false" class="message-banner">
-        Use /ki or /ai to communicate with the AI
+        Use /ki or /ai to communicate with the AI and /cancel to cancel the chat with the AI
       </Message>
       <div class="input-area">
         <InputText v-model="newMessage" placeholder="Type a message" @keyup.enter="sendMessage" />
         <MainButton icon="pi pi-send" @click="sendMessage" />
       </div>
     </div>
+    <div class="input-container" v-else>
+      <Message :closable="false" class="message-banner" severity="warn">
+        Please Log in to chat
+      </Message>
+      <div class="input-area">
+        <InputText
+          v-model="newMessage"
+          placeholder="Type a message"
+          @keyup.enter="sendMessage"
+          disabled
+        />
+        <MainButton icon="pi pi-send" @click="sendMessage" disabled />
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { io } from 'socket.io-client'
 import InputText from 'primevue/inputtext'
 import MainButton from 'primevue/button'
 import Message from 'primevue/message'
+import { useToast } from 'primevue/usetoast'
+import { jwtDecode } from 'jwt-decode'
+import { useAuthStore } from '@/stores/authStore'
 
 export default {
   components: {
@@ -38,60 +55,96 @@ export default {
   },
   setup() {
     const socket = ref(null)
-    const messages = ref([
-      { id: 1, text: 'Hello!', sender: 'me' },
-      { id: 2, text: 'Hi! How are you?', sender: 'other' }
-    ])
+    const messages = ref([])
     const newMessage = ref('')
     const isKiChat = ref(false)
+    const authStore = useAuthStore()
+    const toast = useToast()
+
+    const isLoggedIn = computed(() => {
+      if (authStore.token && isValidToken(authStore.token)) {
+        return true
+      }
+      authStore.clearToken()
+      return false
+    })
+
+    const initializeSocket = () => {
+      socket.value = io('http://localhost:9090')
+      socket.value.on('message', receiveMessage)
+      socket.value.on('ownMessage', senderMessage)
+      socket.value.on('ki', receiveMessage)
+    }
+
+    const disconnectSocket = () => {
+      if (socket.value) {
+        socket.value.disconnect()
+        socket.value = null
+      }
+    }
+
+    onMounted(() => {
+      if (isLoggedIn.value) {
+        initializeSocket()
+      }
+    })
+
+    watch(
+      () => authStore.token,
+      (newVal) => {
+        if (!newVal || !isValidToken(newVal)) {
+          disconnectSocket()
+        } else {
+          initializeSocket()
+        }
+      }
+    )
+
+    onBeforeUnmount(() => {
+      disconnectSocket()
+    })
 
     const sendMessage = () => {
+      if (!isLoggedIn.value) return
+      if (!isValidToken(authStore.token)) {
+        authStore.clearToken()
+        return
+      }
+
       if (isKiChat.value && newMessage.value.trim()) {
         const message = { id: Date.now(), body: newMessage.value, sender: 'me' }
         socket.value.emit('ki', message)
-        // messages.value.push(message)
-        newMessage.value = ''
+        newMessage.value = '@ki: '
+        return
       }
       if (newMessage.value.trim()) {
         const message = { id: Date.now(), body: newMessage.value, sender: 'me' }
         socket.value.emit('message', message)
-        // messages.value.push(message)
         newMessage.value = ''
       }
     }
 
     const receiveMessage = (message) => {
-      console.log('\x1b[33m%s\x1b[0m', 'message --------------------', message)
+      toast.add({ severity: 'info', summary: 'New message', detail: message.body, life: 3000 })
       messages.value.push({ id: Date.now(), text: message, sender: 'other' })
     }
     const senderMessage = (message) => {
-      console.log('\x1b[33m%s\x1b[0m', 'message --------------------', message)
       messages.value.push({ id: Date.now(), text: message, sender: 'me' })
     }
-    onMounted(() => {
-      socket.value = io('http://localhost:9090') // URL des Socket-Servers
-      socket.value.on('message', receiveMessage)
-      socket.value.on('ownMessage', senderMessage)
-      socket.value.on('ki', receiveMessage) // für Nachrichten vom Typ 'ki'
-    })
 
-    onBeforeUnmount(() => {
-      if (socket.value) {
-        socket.value.disconnect()
-      }
-    })
-
-    // watcher for chatting with AI
+    // Watcher for chatting with AI
     watch(newMessage, (newVal) => {
+      if (!isLoggedIn.value) return
+
       const regex = /(\/ai|\/ki)/
       const regexForCancel = /(\/cancel)/
-      const checkSecureRegex = /^chat with Ki:/
+      const checkSecureRegex = /^@ki:/
       if (!checkSecureRegex.test(newVal) && regex.test(newVal)) {
         const match = newVal.match(regex)
         if (match) {
           const command = match[0] // /ai or /ki
           const messageParts = newVal.split(command).filter((part) => part.trim() !== '')
-          const formattedMessage = `chat with Ki: ${messageParts.join(' ').trim()}`
+          const formattedMessage = `@ki: ${messageParts.join(' ').trim()}`
 
           if (newMessage.value !== formattedMessage) {
             newMessage.value = formattedMessage
@@ -102,14 +155,35 @@ export default {
       if (regexForCancel.test(newVal)) {
         const match = newVal.match(regexForCancel)
         const command = match[0] // /cancel
-        console.log('\x1b[33m%s\x1b[0m', 'command --------------------', command)
         const messageParts = newVal.split(command).filter((part) => part.trim() !== command)
-        newMessage.value = messageParts.join(' ').trim()
+        const returnMessage = messageParts[0]
+          .split(RegExp(checkSecureRegex))
+          .filter((part) => part.trim() !== '')
+          .join(' ')
+        newMessage.value = returnMessage
         isKiChat.value = false
+        return
       }
     })
 
-    return { messages, newMessage, isKiChat, sendMessage }
+    function isValidToken(token) {
+      try {
+        const decoded = jwtDecode(token)
+        if (decoded.exp > Date.now() / 1000) return true
+        toast.add({ severity: 'warn', summary: 'Session expired', life: 3000 })
+        return false
+      } catch (e) {
+        return false
+      }
+    }
+
+    return {
+      messages,
+      newMessage,
+      isKiChat,
+      sendMessage,
+      isLoggedIn
+    }
   }
 }
 </script>
@@ -118,7 +192,6 @@ export default {
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 90vh;
   width: 100%;
   margin: 0 auto;
   border: 1px solid #665e5e;
@@ -171,6 +244,8 @@ export default {
 .input-container {
   display: flex;
   flex-direction: column;
+  padding: 6px;
+  gap: 1rem;
   justify-content: center;
   align-items: center;
 }
@@ -178,5 +253,6 @@ export default {
 .input-area .p-inputtext {
   flex: 1;
   margin-right: 10px;
+  height: 3rem;
 }
 </style>
