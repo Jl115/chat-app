@@ -1,8 +1,7 @@
 <template>
   <div class="chat-container">
-    <div class="header">
-      <MainButton icon="pi pi-users" class="user-icon" @click="showUserDialog = true" />
-    </div>
+    <MainButton icon="pi pi-users" class="user-icon" @click="showUserDialog = true" />
+
     <div class="messages">
       <div
         v-for="message in messages"
@@ -227,16 +226,14 @@ export default {
   position: relative;
 }
 
-.header {
-  display: flex;
-  justify-content: flex-end;
-  padding: 10px;
-}
-
 .user-icon {
   position: absolute;
   top: 10px;
   right: 10px;
+  height: 25px;
+  color: #fff;
+  background-color: #251850;
+  border-radius: 50%;
 }
 
 .messages {

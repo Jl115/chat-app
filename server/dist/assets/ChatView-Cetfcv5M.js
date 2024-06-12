@@ -1,0 +1,1 @@
+import{_ as a,C as c,r as e,c as r,o as p,a as l}from"./index-DiXZwENe.js";const u={components:{ChatComponent:c},setup(){const t=e(!0),o=e(!1);return{register:t,showAuthDialog:o,closeAuthDialog:()=>{o.value=!1}}}};function _(t,o,s,f,h,i){const n=l("ChatComponent");return p(),r(n)}const C=a(u,[["render",_]]);export{C as default};
