@@ -1,5 +1,8 @@
 <template>
   <div class="chat-container">
+    <div class="header">
+      <MainButton icon="pi pi-users" class="user-icon" @click="showUserDialog = true" />
+    </div>
     <div class="messages">
       <div
         v-for="message in messages"
@@ -34,6 +37,7 @@
         <MainButton icon="pi pi-send" @click="sendMessage" disabled />
       </div>
     </div>
+    <UserDialogComponent :show="showUserDialog" :users="users" @hide="showUserDialog = false" />
   </div>
 </template>
 
@@ -46,12 +50,14 @@ import Message from 'primevue/message'
 import { useToast } from 'primevue/usetoast'
 import { jwtDecode } from 'jwt-decode'
 import { useAuthStore } from '@/stores/authStore'
+import UserDialogComponent from './UserDialogComponent.vue'
 
 export default {
   components: {
     InputText,
     MainButton,
-    Message
+    Message,
+    UserDialogComponent
   },
   setup() {
     const socket = ref(null)
@@ -60,6 +66,8 @@ export default {
     const isKiChat = ref(false)
     const authStore = useAuthStore()
     const toast = useToast()
+    const showUserDialog = ref(false)
+    const users = ref([])
 
     const isLoggedIn = computed(() => {
       if (authStore.token && isValidToken(authStore.token)) {
@@ -74,6 +82,8 @@ export default {
       socket.value.on('message', receiveMessage)
       socket.value.on('ownMessage', senderMessage)
       socket.value.on('ki', receiveMessage)
+      socket.value.on('users', updateUserList)
+      socket.value.emit('join', { token: authStore.token })
     }
 
     const disconnectSocket = () => {
@@ -112,7 +122,12 @@ export default {
       }
 
       if (isKiChat.value && newMessage.value.trim()) {
-        const message = { id: Date.now(), body: newMessage.value, sender: 'me' }
+        const message = {
+          id: Date.now(),
+          body: newMessage.value,
+          sender: 'me',
+          token: authStore.token
+        }
         socket.value.emit('ki', message)
         newMessage.value = '@ki: '
         return
@@ -135,6 +150,11 @@ export default {
     }
     const senderMessage = (message) => {
       messages.value.push({ id: Date.now(), text: message, sender: 'me' })
+    }
+
+    const updateUserList = (usersList) => {
+      console.log('\x1b[33m%s\x1b[0m', 'usersList --------------------', usersList)
+      users.value = usersList
     }
 
     // Watcher for chatting with AI
@@ -187,7 +207,9 @@ export default {
       newMessage,
       isKiChat,
       sendMessage,
-      isLoggedIn
+      isLoggedIn,
+      showUserDialog,
+      users
     }
   }
 }
@@ -202,6 +224,19 @@ export default {
   border: 1px solid #665e5e;
   border-radius: 8px;
   overflow: hidden;
+  position: relative;
+}
+
+.header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px;
+}
+
+.user-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
 }
 
 .messages {

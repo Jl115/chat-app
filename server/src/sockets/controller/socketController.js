@@ -7,11 +7,24 @@ const secretKey = process.env.JWT_SECRET || "secret key";
 
 const onConnection = (socket) => {
   console.log("New websocket connection");
-  // Chat
+
+  socket.on("join", async (obj) => {
+    try {
+      const verify = jwt.verify(obj.token, secretKey);
+      const user = await User.findByPk(verify.id);
+
+      if (user) {
+        clients.push({ socket, user });
+        console.log("\x1b[33m%s\x1b[0m", "user --------------------", user);
+        broadcastUsers();
+      }
+    } catch (error) {
+      console.error("Failed to verify token:", error);
+    }
+  });
+
   socket.on("message", (message) => onMessage(socket, message));
-  // KI
   socket.on("ki", (message) => onKi(socket, message));
-  // Disconnect
   socket.on("disconnect", () => onDisconnect(socket));
 };
 
@@ -33,6 +46,7 @@ const onMessage = async (socket, message) => {
         userId: user.id,
       });
       clients.push({ socket, message: savedMessage.content });
+
       broadcastMessage(socket, savedMessage);
     } else {
       throw new Error("User validation failed");
@@ -70,13 +84,14 @@ const onKi = async (socket, message) => {
 };
 
 const broadcastUsers = () => {
-  const usersMessage = {
-    type: "users",
-    users: clients.map((client) => client.user),
-  };
-  const usersMessageString = JSON.stringify(usersMessage);
+  const usersMessage = clients.map((client) => ({
+    id: client.user.id,
+    username: client.user.username,
+  }));
+
   clients.forEach((client) => {
-    client.socket.emit("message", usersMessageString);
+    console.log("\x1b[33m%s\x1b[0m", "emit --------------------");
+    client.socket.emit("users", usersMessage);
   });
 };
 
