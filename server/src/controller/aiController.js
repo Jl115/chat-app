@@ -20,7 +20,6 @@ const createResponseController = async (requestObject) => {
       return;
     } catch (error) {
       console.error("Error in createResponseController:", error);
-      throw new Error("Failed to get response from API");
     }
   });
 };

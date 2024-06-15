@@ -18,6 +18,9 @@ module.exports = {
       token: {
         type: Sequelize.STRING,
       },
+      groupId: {
+        type: Sequelize.INTEGER,
+      },
       password: {
         type: Sequelize.STRING,
       },

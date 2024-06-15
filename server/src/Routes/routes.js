@@ -1,4 +1,3 @@
-const express = require("express");
 const authRoutes = require("./auth.js");
 const chatRoutes = require("./chat.js");
 const aiRoutes = require("./ai.js");

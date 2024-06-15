@@ -1,5 +1,54 @@
 <template>
-  <div class="chat-container">
+  <div class="chat-container" v-if="groupId">
+    <h1
+      class="bg-emerald-500 rounded-xl p-2 bg-opacity-40 hover:bg-opacity-60 absolute left-1/2 top-2 p-2"
+    >
+      {{ chatTitle }}
+    </h1>
+    <MainButton
+      icon="pi pi-users"
+      class="user-icon bg-emerald-500 rounded-xl p-2 bg-opacity-40 hover:bg-opacity-60"
+      @click="showUserDialog = true"
+    />
+
+    <div class="messages">
+      <div
+        v-for="message in groupMessages"
+        :key="message.id"
+        :class="['message', message.sender === 'me' ? 'sent' : 'received']"
+      >
+        <div class="message-content">
+          {{ message.text }}
+        </div>
+      </div>
+    </div>
+    <div class="input-container" v-if="isLoggedIn">
+      <div class="input-area">
+        <InputText
+          v-model="newMessage"
+          placeholder="Type a message"
+          @keyup.enter="sendGroupMessage"
+        />
+        <MainButton icon="pi pi-send" @click="sendGroupMessage" />
+      </div>
+    </div>
+    <div class="input-container" v-else>
+      <Message :closable="false" class="message-banner" severity="warn">
+        Please Log in to chat
+      </Message>
+      <div class="input-area">
+        <InputText
+          v-model="newMessage"
+          placeholder="Type a message"
+          @keyup.enter="sendGroupMessage"
+          disabled
+        />
+        <MainButton icon="pi pi-send" @click="sendGroupMessage" disabled />
+      </div>
+    </div>
+    <UserDialogComponent :show="showUserDialog" :users="users" @hide="showUserDialog = false" />
+  </div>
+  <div class="chat-container" v-else>
     <MainButton icon="pi pi-users" class="user-icon" @click="showUserDialog = true" />
 
     <div class="messages">
@@ -58,7 +107,13 @@ export default {
     Message,
     UserDialogComponent
   },
-  setup() {
+  props: {
+    groupId: {
+      type: String,
+      default: null
+    }
+  },
+  setup(props) {
     const socket = ref(null)
     const messages = ref([])
     const newMessage = ref('')
@@ -67,6 +122,8 @@ export default {
     const toast = useToast()
     const showUserDialog = ref(false)
     const users = ref([])
+    const chatTitle = ref('')
+    const groupMessages = ref([])
 
     const isLoggedIn = computed(() => {
       if (authStore.token && isValidToken(authStore.token)) {
@@ -77,12 +134,21 @@ export default {
     })
 
     const initializeSocket = () => {
-      socket.value = io('http://localhost:9090')
-      socket.value.on('message', receiveMessage)
-      socket.value.on('ownMessage', senderMessage)
-      socket.value.on('ki', receiveMessage)
-      socket.value.on('users', updateUserList)
-      socket.value.emit('join', { token: authStore.token })
+      if (!socket.value) {
+        socket.value = io('http://localhost:9090')
+        socket.value.on('message', receiveMessage)
+        socket.value.on('ownMessage', senderMessage)
+        socket.value.on('ki', receiveMessage)
+        socket.value.on('users', updateUserList)
+        socket.value.on('group', updateGroup)
+        socket.value.on('removeSession', () => {
+          authStore.clearToken()
+          toast.add({ severity: 'warn', summary: 'Session expired', life: 3000 })
+        })
+        socket.value.on('receiveGroupMessage', receiveGroupMessage)
+        socket.value.on('ownGroupMessage', ownGroupMessage)
+        socket.value.emit('join', { token: authStore.token })
+      }
     }
 
     const disconnectSocket = () => {
@@ -96,7 +162,19 @@ export default {
       if (isLoggedIn.value) {
         initializeSocket()
       }
+      if (props.groupId) {
+        socket.value.emit('joinGroup', { groupId: props.groupId, token: authStore.token })
+      }
     })
+
+    watch(
+      () => props.groupId,
+      (newGroupId) => {
+        if (socket.value && newGroupId) {
+          socket.value.emit('joinGroup', { groupId: newGroupId, token: authStore.token })
+        }
+      }
+    )
 
     watch(
       () => authStore.token,
@@ -112,6 +190,10 @@ export default {
     onBeforeUnmount(() => {
       disconnectSocket()
     })
+
+    const updateGroup = (group) => {
+      chatTitle.value = group.groupName
+    }
 
     const sendMessage = () => {
       if (!isLoggedIn.value) return
@@ -147,13 +229,58 @@ export default {
       toast.add({ severity: 'info', summary: 'New message', detail: message.body, life: 3000 })
       messages.value.push({ id: Date.now(), text: message, sender: 'other' })
     }
+
     const senderMessage = (message) => {
       messages.value.push({ id: Date.now(), text: message, sender: 'me' })
     }
 
     const updateUserList = (usersList) => {
-      console.log('\x1b[33m%s\x1b[0m', 'usersList --------------------', usersList)
       users.value = usersList
+    }
+
+    const sendGroupMessage = () => {
+      if (!isLoggedIn.value) return
+      if (!isValidToken(authStore.token)) {
+        authStore.clearToken()
+        return
+      }
+
+      if (isKiChat.value && newMessage.value.trim()) {
+        const message = {
+          id: Date.now(),
+          body: newMessage.value,
+          sender: 'me',
+          token: authStore.token
+        }
+        socket.value.emit('ki', message)
+        newMessage.value = '@ki: '
+        return
+      }
+      if (newMessage.value.trim()) {
+        const message = {
+          id: Date.now(),
+          body: newMessage.value,
+          groupId: props.groupId,
+          sender: 'me',
+          token: authStore.token
+        }
+        socket.value.emit('sendGroupMessage', message)
+        newMessage.value = ''
+      }
+    }
+
+    const receiveGroupMessage = (message) => {
+      groupMessages.value.push({ id: Date.now(), text: message.content, sender: 'other' })
+      toast.add({
+        severity: 'info',
+        summary: 'New group message',
+        detail: message.content,
+        life: 3000
+      })
+    }
+
+    const ownGroupMessage = (message) => {
+      groupMessages.value.push({ id: Date.now(), text: message.content, sender: 'me' })
     }
 
     // Watcher for chatting with AI
@@ -163,7 +290,7 @@ export default {
       const regex = /(\/ai|\/ki)/
       const regexForCancel = /(\/cancel)/
       const checkSecureRegex = /^@ki:/
-      if (!checkSecureRegex.test(newVal) && regex.test(newVal)) {
+      if (!checkSecureRegex.test(newVal) && regex.test(newVal) && !props.groupId) {
         const match = newVal.match(regex)
         if (match) {
           const command = match[0] // /ai or /ki
@@ -205,7 +332,12 @@ export default {
       messages,
       newMessage,
       isKiChat,
+      chatTitle,
+      groupMessages,
       sendMessage,
+      sendGroupMessage,
+      receiveGroupMessage,
+      ownGroupMessage,
       isLoggedIn,
       showUserDialog,
       users
@@ -232,8 +364,6 @@ export default {
   right: 10px;
   height: 25px;
   color: #fff;
-  background-color: #251850;
-  border-radius: 50%;
 }
 
 .messages {

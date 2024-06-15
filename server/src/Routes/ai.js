@@ -14,7 +14,6 @@ const aiRoutes = (router) => {
   });
 
   router.post("/ask", async (req, res) => {
-    console.log("\x1b[33m%s\x1b[0m", "req.body --------------------", req.body);
     const validationObject = aiMessageValidator(req.body);
     if (validationObject.status === "400") {
       return res.send(validationObject);

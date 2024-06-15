@@ -28,7 +28,6 @@ export default defineComponent({
   },
   setup(props) {
     const visible = ref(props.show)
-    console.log('\x1b[33m%s\x1b[0m', 'props.users --------------------', props.users)
     watch(
       () => props.show,
       (newVal) => {

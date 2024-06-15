@@ -16,13 +16,10 @@ const aiValidatorSchema = Joi.object({
  * with the input object itself.
  */
 const aiMessageValidator = (input) => {
-  console.log("\x1b[33m%s\x1b[0m", "input --------------------", input);
-
   // Validate the input object against the schema
   const validation = aiValidatorSchema.validate(input, { abortEarly: false });
-  console.log("\x1b[33m%s\x1b[0m", "error --------------------", validation);
 
-  /* if (error) {
+  if (error) {
     console.log(
       "\x1b[31m%s\x1b[0m",
       "Validation Error --------------------",
@@ -34,7 +31,7 @@ const aiMessageValidator = (input) => {
         .map((detail) => detail.message)
         .join(", ")}`,
     };
-  } */
+  }
 
   return { status: "201", message: "Input is valid", input: input };
 };

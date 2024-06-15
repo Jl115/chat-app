@@ -1,9 +1,9 @@
 <template>
   <div class="h-full flex flex-col justify-center">
-    <MainMenu :model="items" class="w-full md:w-15rem w-36 h-96 bg-slate-950 rounded-xl">
+    <MainMenu :model="items" class="w-full md:w-15rem h-96 bg-slate-950 rounded-xl">
       <template #start>
         <div class="contents items-center w-full justify-items-center gap-1 px-2 py-2">
-          <p class="font-medium text-xl font-semibold text-center">LB-Chat-App</p>
+          <p class="text-xl font-semibold text-center">LB-Chat-App</p>
         </div>
       </template>
       <template #submenuheader="{ item }">
@@ -22,7 +22,7 @@
         </a>
       </template>
       <template #end>
-        <div class="flex h-32 end-container">
+        <div class="flex h-44 end-container">
           <div class="self-end w-full">
             <button
               v-ripple
@@ -30,11 +30,7 @@
               @click="openProfile"
               v-if="isLoggedIn"
             >
-              <Avatar
-                image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
-                class="mr-2"
-                shape="circle"
-              />
+              <Avatar icon="pi pi-prime" class="mr-2" />
               <span class="flex flex-column items-center gap-4">
                 <span class="font-bold">{{ username }}</span>
                 <!-- In an Future update it has a role management -->
@@ -89,13 +85,6 @@ export default {
         }
       },
       {
-        label: 'Chat',
-        icon: 'pi pi-comments',
-        command: () => {
-          router.push('/chat')
-        }
-      },
-      {
         label: 'Groups',
         icon: 'pi pi-comments',
         command: () => {
@@ -106,12 +95,12 @@ export default {
         label: 'Settings',
         icon: 'pi pi-cog',
         items: [
-          { label: 'Profile', icon: 'pi pi-user', command: () => {} },
           {
-            label: 'Notifications',
-            icon: 'pi pi-bell',
+            label: 'Logout',
+            icon: 'pi pi-sign-out',
             command: () => {
-              router.push('/notification')
+              authStore.clearToken()
+              router.push('/')
             }
           }
         ]

@@ -31,12 +31,6 @@ app.get("*", (req, res) => {
 // Initialize and use API routes
 app.use("/api", routes(express.Router()));
 
-console.log(
-  "\x1b[33m%s\x1b[0m",
-  " ,process.env.DEV_DB_USERNAME--------------------",
-  process.env.DB_USER
-);
-
 // Test connection for Database
 db.sequelize
   .authenticate()

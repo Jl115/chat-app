@@ -1,9 +1,10 @@
 <template>
-  <ChatComponent />
+  <ChatComponent :groupId="groupId" />
 </template>
 
 <script>
 import { ref } from 'vue'
+import { useRoute } from 'vue-router'
 import ChatComponent from '../components/ChatComponent.vue'
 
 export default {
@@ -11,6 +12,8 @@ export default {
     ChatComponent
   },
   setup() {
+    const route = useRoute()
+    const groupId = ref(route.params.groupId)
     const register = ref(true)
     const showAuthDialog = ref(false)
 
@@ -19,6 +22,7 @@ export default {
     }
 
     return {
+      groupId,
       register,
       showAuthDialog,
       closeAuthDialog

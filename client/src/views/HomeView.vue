@@ -3,7 +3,6 @@
 </template>
 
 <script>
-// import { ref } from 'vue'
 import ChatComponent from '../components/ChatComponent.vue'
 
 export default {

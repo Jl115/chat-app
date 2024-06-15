@@ -20,7 +20,6 @@ const authRoutes = (router) => {
   // Login route
   router.post("/login", async (req, res) => {
     const validationObject = loginValidator(req.body);
-    console.log("\x1b[33m%s\x1b[0m", "req.body --------------------", req.body);
     if (validationObject.status === "400") {
       return res.send(validationObject);
     }

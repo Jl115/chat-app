@@ -1,5 +1,5 @@
 const { createResponseController } = require("../../controller/aiController");
-const { Message, User } = require("../../../models");
+const { Message, User, Groups } = require("../../../models");
 const jwt = require("jsonwebtoken");
 const clients = [];
 
@@ -15,7 +15,6 @@ const onConnection = (socket) => {
 
       if (user) {
         clients.push({ socket, user });
-        console.log("\x1b[33m%s\x1b[0m", "user --------------------", user);
         broadcastUsers();
       }
     } catch (error) {
@@ -26,6 +25,9 @@ const onConnection = (socket) => {
   socket.on("message", (message) => onMessage(socket, message));
   socket.on("ki", (message) => onKi(socket, message));
   socket.on("disconnect", () => onDisconnect(socket));
+  socket.on("fetchGroups", () => onGroupList(socket));
+  socket.on("joinGroup", (group) => onJoinGroup(socket, group));
+  socket.on("sendGroupMessage", (message) => onGroupMessage(socket, message));
 };
 
 const onMessage = async (socket, message) => {
@@ -45,11 +47,79 @@ const onMessage = async (socket, message) => {
         content: message.body,
         userId: user.id,
       });
-      clients.push({ socket, message: savedMessage.content });
 
       broadcastMessage(socket, savedMessage);
     } else {
-      throw new Error("User validation failed");
+      console.error("User validation failed");
+    }
+  } catch (error) {
+    console.error("Failed to parse message:", error);
+  }
+};
+
+const onGroupList = async (socket, message) => {
+  try {
+    const groups = await Groups.findAll();
+    socket.emit("groupList", groups);
+  } catch (error) {
+    console.error("Failed to fetch groups:", error);
+  }
+};
+
+const onJoinGroup = async (socket, group) => {
+  let groupObj = JSON.parse(JSON.stringify(group));
+  try {
+    const decoded = jwt.verify(groupObj.token, secretKey);
+    const user = await User.findByPk(decoded.id);
+    if (
+      user &&
+      user.email === decoded.email &&
+      user.username === decoded.username
+    ) {
+      user.groupId = groupObj.groupId;
+      await user.save();
+
+      // Update client with groupId
+      const client = clients.find((client) => client.socket === socket);
+      if (client) {
+        client.groupId = groupObj.groupId;
+      }
+
+      const groupData = await Groups.findByPk(groupObj.groupId);
+      socket.emit("group", groupData);
+    } else {
+      socket.emit("removeSession");
+    }
+  } catch (error) {
+    console.error("Failed to join group:", error);
+  }
+};
+
+const onGroupMessage = async (socket, message) => {
+  const unbindedMessage = JSON.parse(JSON.stringify(message));
+
+  try {
+    const decoded = jwt.verify(unbindedMessage.token, secretKey);
+    const user = await User.findByPk(decoded.id);
+    if (
+      user &&
+      user.email === decoded.email &&
+      user.username === decoded.username
+    ) {
+      const savedMessage = await Message.create({
+        content: unbindedMessage.body,
+        userId: user.id,
+        groupId: unbindedMessage.groupId,
+      });
+
+      // Broadcast the message to all group members
+      broadcastMessageToAllGroupMembers(
+        socket,
+        savedMessage,
+        unbindedMessage.groupId
+      );
+    } else {
+      console.error("User validation failed");
     }
   } catch (error) {
     console.error("Failed to parse message:", error);
@@ -73,10 +143,9 @@ const onKi = async (socket, message) => {
         content: response.message.content,
         userId: user.id,
       });
-      clients.push({ socket, message: savedMessage.content });
       broadcastMessageToAll(socket, savedMessage.content);
     } else {
-      throw new Error("User validation failed");
+      console.error("Failed to parse message:", error);
     }
   } catch (error) {
     console.error("Failed to parse message:", error);
@@ -84,24 +153,36 @@ const onKi = async (socket, message) => {
 };
 
 const broadcastUsers = () => {
-  const usersMessage = clients.map((client) => ({
-    id: client.user.id,
-    username: client.user.username,
-  }));
+  const usersMessage = clients
+    .filter((client) => client.user) // Ensure that user is defined
+    .map((client) => ({
+      id: client.user.id,
+      username: client.user.username,
+    }));
 
   clients.forEach((client) => {
-    console.log("\x1b[33m%s\x1b[0m", "emit --------------------");
     client.socket.emit("users", usersMessage);
   });
 };
 
+const broadcastMessageToAllGroupMembers = (sender, message, groupId) => {
+  clients.forEach((client) => {
+    if (client.groupId === groupId && client.socket !== sender) {
+      client.socket.emit("receiveGroupMessage", message);
+    }
+  });
+  // Sende die Nachricht an den Sender zurück als Bestätigung
+  sender.emit("ownGroupMessage", message);
+};
+
 const broadcastMessage = (sender, message) => {
   clients.forEach((client) => {
-    if (client.socket !== sender)
+    if (client.socket !== sender) {
       client.socket.emit("message", message.content);
-    else if (client.socket === sender)
-      client.socket.emit("ownMessage", message.content);
+    }
   });
+  // Sende die Nachricht an den Sender zurück als Bestätigung
+  sender.emit("ownMessage", message.content);
 };
 
 const broadcastMessageToAll = (sender, messageString) => {
