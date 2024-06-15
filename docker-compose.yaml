@@ -1,6 +1,24 @@
 version: "3.8"
 
 services:
+  backend:
+    image: jl115/lb-chat:latest
+    container_name: chat-backend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - db
+      - ki
+    environment:
+      DB_HOST: db
+      DB_USER: user
+      DB_PASSWORD: password
+      DB_NAME: lb-chat
+      DB_PORT: 5432
+      KI_HOST: ki
+      KI_PORT: 11434
+
   db:
     image: postgres:latest
     restart: always
@@ -9,12 +27,10 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: lb-chat
     ports:
-      - "9091:5432"
+      - "5432:5432"
 
   ki:
     image: jl115/tinyllm:latest
     container_name: chat-ki
     ports:
-      - "9095:11434"
-    volumes:
-      - ./.ollama:/data
+      - "11434:11434"

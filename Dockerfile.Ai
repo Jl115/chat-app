@@ -1,0 +1,14 @@
+FROM ollama/ollama
+
+# Install bash (for debugging and flexibility)
+RUN apt-get update && apt-get install -y bash
+
+# Copy script and give it execute permissions
+COPY run-ollama.sh /tmp/run-ollama.sh
+RUN chmod +x /tmp/run-ollama.sh
+
+# Expose Ollama API port
+EXPOSE 11434
+
+# Set the script as the container's entrypoint
+ENTRYPOINT ["/tmp/run-ollama.sh"]

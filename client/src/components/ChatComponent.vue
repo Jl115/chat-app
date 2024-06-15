@@ -135,7 +135,7 @@ export default {
 
     const initializeSocket = () => {
       if (!socket.value) {
-        socket.value = io('http://localhost:9090')
+        socket.value = io('http://localhost:80')
         socket.value.on('message', receiveMessage)
         socket.value.on('ownMessage', senderMessage)
         socket.value.on('ki', receiveMessage)

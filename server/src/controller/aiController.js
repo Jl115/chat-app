@@ -4,7 +4,7 @@ const createResponseController = async (requestObject) => {
   return new Promise(async (resolve, reject) => {
     try {
       const response = await axios.post(
-        process.env.API_URL || "http://localhost:9095/api/chat",
+        process.env.API_URL || "http://localhost:11434/api/chat",
         {
           model: process.env.MODEL_NAME || "gemma:2b",
           messages: [

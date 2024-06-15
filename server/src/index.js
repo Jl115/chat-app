@@ -3,6 +3,7 @@ const cors = require("cors");
 const path = require("path");
 const db = require("../models/index.js");
 const initializeSocketServer = require("./sockets/socket");
+const { Sequelize } = require("sequelize");
 
 // Set path to .env file
 require("dotenv").config();
@@ -14,6 +15,34 @@ const app = express();
 const corsOptions = {
   origin: "*",
 };
+console.log(
+  "\x1b[33m%s\x1b[0m",
+  "process.env.DB_PORT  --------------------",
+  process.env.DB_PORT
+);
+// Test connection for Database
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST || "127.0.0.1",
+    port: process.env.DB_PORT || 5432,
+    dialect: "postgres",
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000,
+    },
+  }
+);
+sequelize
+  .authenticate()
+  .then(() =>
+    console.log("Database connection has been established successfully.")
+  )
+  .catch((error) => console.error("Unable to connect to the database:", error));
 
 // Middleware
 app.use(cors(corsOptions));
@@ -31,14 +60,6 @@ app.get("*", (req, res) => {
 // Initialize and use API routes
 app.use("/api", routes(express.Router()));
 
-// Test connection for Database
-db.sequelize
-  .authenticate()
-  .then(() =>
-    console.log("Database connection has been established successfully.")
-  )
-  .catch((error) => console.error("Unable to connect to the database:", error));
-
 // Create HTTP server
 const server = require("http").createServer(app);
 
@@ -46,7 +67,7 @@ const server = require("http").createServer(app);
 initializeSocketServer(server);
 
 // Start server
-const PORT = process.env.SERVER_PORT || 9090;
+const PORT = process.env.SERVER_PORT || 80;
 server.listen(PORT, () => {
   try {
     console.log(`App listening at https://localhost:${PORT}`);

@@ -153,7 +153,7 @@ export default defineComponent({
         password: password.value
       }
 
-      await axios.post('http://localhost:9090/api/auth/login', loginObj).then((res) => {
+      await axios.post('http://localhost:80/api/auth/login', loginObj).then((res) => {
         if (res.status === 200) {
           authStore.setToken(res.data.token)
           emitHide()
@@ -167,7 +167,7 @@ export default defineComponent({
         password: password.value
       }
       // register user
-      await axios.post('http://localhost:9090/api/auth/register', registerObj).then((res) => {
+      await axios.post('http://localhost:80/api/auth/register', registerObj).then((res) => {
         if (res.data.status === '201') {
           authStore.setToken(res.data.token)
           toast.add({ severity: 'success', summary: 'Registration successful', life: 3000 })
@@ -177,7 +177,7 @@ export default defineComponent({
         toast.add({
           severity: 'warn',
           summary: 'Warn Message',
-          detail: 'Message Content',
+          detail: 'Registration failed. Please try again.',
           life: 3000
         })
         return

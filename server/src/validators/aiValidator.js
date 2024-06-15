@@ -18,13 +18,8 @@ const aiValidatorSchema = Joi.object({
 const aiMessageValidator = (input) => {
   // Validate the input object against the schema
   const validation = aiValidatorSchema.validate(input, { abortEarly: false });
-
+  const { error } = validation;
   if (error) {
-    console.log(
-      "\x1b[31m%s\x1b[0m",
-      "Validation Error --------------------",
-      error.details
-    );
     return {
       status: "400",
       message: `Invalid request: ${error.details

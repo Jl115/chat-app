@@ -43,7 +43,7 @@ export default {
     }
 
     onMounted(() => {
-      socket.value = io('http://localhost:9090')
+      socket.value = io('http://localhost:80')
       socket.value.on('groupList', receiveGroups)
       fetchGroups()
     })
