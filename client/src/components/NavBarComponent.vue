@@ -71,7 +71,8 @@ import ProfileComponent from './ProfileComponent.vue'
 
 export default {
   components: { AuthComponent, Avatar, Badge, ProfileComponent },
-  setup() {
+  emits: ['loadMessages'],
+  setup(props, { emit }) {
     const router = useRouter()
     const authStore = useAuthStore()
     const username = ref('')
@@ -134,7 +135,9 @@ export default {
     const openProfile = () => {
       showProfile.value = true
     }
-
+    const loadMessages = () => {
+      emit('loadMessages')
+    }
     onMounted(() => {
       if (!isLoggedIn.value) {
         openAuthDialog()
@@ -161,7 +164,8 @@ export default {
       openProfile,
       closeAuthDialog,
       openAuthDialog,
-      closeProfile
+      closeProfile,
+      loadMessages
     }
   }
 }

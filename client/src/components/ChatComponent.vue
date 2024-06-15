@@ -147,6 +147,16 @@ export default {
         })
         socket.value.on('receiveGroupMessage', receiveGroupMessage)
         socket.value.on('ownGroupMessage', ownGroupMessage)
+        socket.value.on('messageHistory', (history) => {
+          const userObj = jwtDecode(authStore.token)
+          messages.value = history.map((message) => {
+            if (message.userId === userObj.id) {
+              return { id: message.userId, text: message.content, sender: 'me' }
+            } else {
+              return { id: message.userId, text: message.content, sender: 'other' }
+            }
+          })
+        })
         socket.value.emit('join', { token: authStore.token })
       }
     }
@@ -161,9 +171,10 @@ export default {
     onMounted(() => {
       if (isLoggedIn.value) {
         initializeSocket()
-      }
-      if (props.groupId) {
-        socket.value.emit('joinGroup', { groupId: props.groupId, token: authStore.token })
+        socket.value.emit('fetchMessages', authStore.token)
+        if (props.groupId) {
+          socket.value.emit('joinGroup', { groupId: props.groupId, token: authStore.token })
+        }
       }
     })
 
@@ -183,6 +194,7 @@ export default {
           disconnectSocket()
         } else {
           initializeSocket()
+          socket.value.emit('fetchMessages', authStore.token)
         }
       }
     )

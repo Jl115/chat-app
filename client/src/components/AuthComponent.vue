@@ -154,7 +154,6 @@ export default defineComponent({
       }
 
       await axios.post('http://localhost:9090/api/auth/login', loginObj).then((res) => {
-        console.log('\x1b[33m%s\x1b[0m', 'res --------------------', res)
         if (res.status === 200) {
           authStore.setToken(res.data.token)
           emitHide()
@@ -169,7 +168,6 @@ export default defineComponent({
       }
       // register user
       await axios.post('http://localhost:9090/api/auth/register', registerObj).then((res) => {
-        console.log('\x1b[33m%s\x1b[0m', 'res --------------------', res)
         if (res.data.status === '201') {
           authStore.setToken(res.data.token)
           toast.add({ severity: 'success', summary: 'Registration successful', life: 3000 })

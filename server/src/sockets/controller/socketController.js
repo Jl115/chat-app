@@ -28,6 +28,7 @@ const onConnection = (socket) => {
   socket.on("fetchGroups", () => onGroupList(socket));
   socket.on("joinGroup", (group) => onJoinGroup(socket, group));
   socket.on("sendGroupMessage", (message) => onGroupMessage(socket, message));
+  socket.on("fetchMessages", (token) => onFetchMessages(socket, token));
 };
 
 const onMessage = async (socket, message) => {
@@ -63,6 +64,18 @@ const onGroupList = async (socket, message) => {
     socket.emit("groupList", groups);
   } catch (error) {
     console.error("Failed to fetch groups:", error);
+  }
+};
+
+const onFetchMessages = async (socket, token) => {
+  const tokenObj = JSON.parse(JSON.stringify(token));
+  try {
+    const decoded = jwt.verify(tokenObj, secretKey);
+    const user = await User.findByPk(decoded.id);
+    const allMessages = await Message.findAll();
+    socket.emit("messageHistory", allMessages);
+  } catch (error) {
+    console.error("Failed to fetch messages:", error);
   }
 };
 
@@ -154,7 +167,7 @@ const onKi = async (socket, message) => {
 
 const broadcastUsers = () => {
   const usersMessage = clients
-    .filter((client) => client.user) // Ensure that user is defined
+    .filter((client) => client.user)
     .map((client) => ({
       id: client.user.id,
       username: client.user.username,
@@ -171,7 +184,6 @@ const broadcastMessageToAllGroupMembers = (sender, message, groupId) => {
       client.socket.emit("receiveGroupMessage", message);
     }
   });
-  // Sende die Nachricht an den Sender zurück als Bestätigung
   sender.emit("ownGroupMessage", message);
 };
 
@@ -181,7 +193,6 @@ const broadcastMessage = (sender, message) => {
       client.socket.emit("message", message.content);
     }
   });
-  // Sende die Nachricht an den Sender zurück als Bestätigung
   sender.emit("ownMessage", message.content);
 };
 
